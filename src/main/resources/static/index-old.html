@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Employee List</title>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 8px;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Employee List</h1>
+  <button onclick="loadEmployees()">Load Employees</button>
+  <button onclick="showAddForm()">Add Employee</button>
+
+  <!-- Add Employee Form (hidden by default) -->
+  <div id="addEmployeeForm" style="display:none; margin-top: 20px;">
+    <h3>Add New Employee</h3>
+    <form id="employeeForm" onsubmit="submitEmployee(event)">
+      <label>First Name:</label><br>
+      <input type="text" id="firstName" required><br><br>
+
+      <label>Last Name:</label><br>
+      <input type="text" id="lastName" required><br><br>
+
+      <label>Email:</label><br>
+      <input type="email" id="email" required><br><br>
+
+      <button type="submit">Submit</button>
+      <button type="button" onclick="hideAddForm()">Cancel</button>
+    </form>
+  </div>
+  <!-- Edit Employee Form (hidden by default) --> <!-- here! here! -->
+    <div id="editEmployeeForm" style="display:none; margin-top: 20px;"> <!-- here! here! -->
+      <h3>Edit Employee</h3> <!-- here! here! -->
+      <form id="editForm" onsubmit="submitEditEmployee(event)"> <!-- here! here! -->
+        <input type="hidden" id="editId" /> <!-- here! here! -->
+        
+        <label>First Name:</label><br> <!-- here! here! -->
+        <input type="text" id="editFirstName" required><br><br> <!-- here! here! -->
+
+        <label>Last Name:</label><br> <!-- here! here! -->
+        <input type="text" id="editLastName" required><br><br> <!-- here! here! -->
+
+        <label>Email:</label><br> <!-- here! here! -->
+        <input type="email" id="editEmail" required><br><br> <!-- here! here! -->
+
+        <button type="submit">Update</button> <!-- here! here! -->
+        <button type="button" onclick="hideEditForm()">Cancel</button> <!-- here! here! -->
+      </form> <!-- here! here! -->
+    </div> <!-- here! here! -->
+  <table id="employeeTable" style="margin-top: 20px; display: none;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Email</th>
+		<th>Edit</th>
+		<th>Delete</th> <!-- for delete -->
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+
+  <script>
+    function loadEmployees() {
+      fetch('/api/employees')
+        .then(response => response.json())
+        .then(data => {
+          const table = document.getElementById('employeeTable');
+          const tbody = table.querySelector('tbody');
+          tbody.innerHTML = '';
+
+          data.forEach(employee => {
+            const row = `<tr>
+              <td>${employee.id}</td>
+              <td>${employee.firstName}</td>
+              <td>${employee.lastName}</td>
+              <td>${employee.email}</td>
+			  <td><button onclick="showEditForm(${employee.id}, '${employee.firstName}', '${employee.lastName}', '${employee.email}')">Edit</button></td>
+			  <td><button onclick="deleteEmployee(${employee.id})">Delete</button></td>
+            </tr>`;
+            tbody.innerHTML += row;
+          });
+
+          table.style.display = 'table';
+        })
+        .catch(error => console.error('Error fetching employee data:', error));
+    }
+	function showAddForm() {
+	  document.getElementById('addEmployeeForm').style.display = 'block';
+	}
+
+	function hideAddForm() {
+	  document.getElementById('addEmployeeForm').style.display = 'none';
+	}
+
+	function submitEmployee(event) {
+	  event.preventDefault(); // prevent page reload
+
+	  const employee = {
+	    firstName: document.getElementById('firstName').value,
+	    lastName: document.getElementById('lastName').value,
+	    email: document.getElementById('email').value,
+	  };
+
+	  fetch('/api/employees', {
+	    method: 'POST',
+	    headers: {
+	      'Content-Type': 'application/json'
+	    },
+	    body: JSON.stringify(employee)
+	  })
+	  .then(response => {
+	    if (!response.ok) throw new Error('Failed to add employee');
+	    return response.json();
+	  })
+	  .then(data => {
+	    alert('Employee added successfully!');
+	    hideAddForm();
+	    loadEmployees(); // refresh table to show new employee
+	    // clear form inputs
+	    document.getElementById('employeeForm').reset();
+	  })
+	  .catch(error => alert(error));
+	}
+	// ===== Edit Employee JS ===== // here! here!
+	    function showEditForm(id, firstName, lastName, email) { // here! here!
+	      document.getElementById('editEmployeeForm').style.display = 'block'; // here! here!
+	      document.getElementById('editId').value = id; // here! here!
+	      document.getElementById('editFirstName').value = firstName; // here! here!
+	      document.getElementById('editLastName').value = lastName; // here! here!
+	      document.getElementById('editEmail').value = email; // here! here!
+	    } // here! here!
+
+	    function hideEditForm() { // here! here!
+	      document.getElementById('editEmployeeForm').style.display = 'none'; // here! here!
+	    } // here! here!
+
+	    function submitEditEmployee(event) { // here! here!
+	      event.preventDefault(); // here! here!
+
+	      const id = document.getElementById('editId').value; // here! here!
+	      const updatedEmployee = { // here! here!
+	        firstName: document.getElementById('editFirstName').value, // here! here!
+	        lastName: document.getElementById('editLastName').value, // here! here!
+	        email: document.getElementById('editEmail').value, // here! here!
+	      }; // here! here!
+
+	      fetch(`/api/employees/${id}`, { // here! here!
+	        method: 'PUT', // here! here!
+	        headers: { 'Content-Type': 'application/json' }, // here! here!
+	        body: JSON.stringify(updatedEmployee) // here! here!
+	      }) // here! here!
+	      .then(response => { // here! here!
+	        if (!response.ok) throw new Error('Failed to update employee'); // here! here!
+	        return response.json(); // here! here!
+	      }) // here! here!
+	      .then(data => { // here! here!
+	        alert('Employee updated successfully!'); // here! here!
+	        hideEditForm(); // here! here!
+	        loadEmployees(); // here! here!
+	      }) // here! here!
+	      .catch(error => alert(error)); // here! here!
+	    } // here! here!
+		function deleteEmployee(id) { // for delete
+		      if (confirm('Are you sure you want to delete this employee?')) { // for delete
+		        fetch(`/api/employees/${id}`, { // for delete
+		          method: 'DELETE' // for delete
+		        }) // for delete
+		        .then(response => { // for delete
+		          if (!response.ok) throw new Error('Failed to delete employee'); // for delete
+		          alert('Employee deleted successfully!'); // for delete
+		          loadEmployees(); // for delete
+		        }) // for delete
+		        .catch(error => alert(error)); // for delete
+		      }
+		    } 
+  </script>
+</body>
+</html>

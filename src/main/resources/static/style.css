@@ -1,0 +1,562 @@
+/* ============================================
+   DESIGN TOKENS
+   ============================================ */
+:root {
+    --bg: #0A0E12;
+    --panel: rgba(23, 31, 38, 0.65);
+    --panel-solid: #171F26;
+    --border: #2A3540;
+    --text: #E8EDF2;
+    --text-muted: #8B98A5;
+    --accent: #C9A227;
+    --accent-soft: rgba(201, 162, 39, 0.15);
+    --status: #6B8F71;
+    --danger: #C4544A;
+    --radius: 10px;
+    --font-display: 'Rajdhani', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+body.light-mode {
+    --bg: #EEF1F4;
+    --panel: rgba(255, 255, 255, 0.75);
+    --panel-solid: #FFFFFF;
+    --border: #D3D9DF;
+    --text: #1A2027;
+    --text-muted: #5C6773;
+    --accent: #A8801E;
+    --accent-soft: rgba(168, 128, 30, 0.12);
+    --status: #4C6B52;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================
+   LAYOUT SHELL
+   ============================================ */
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
+.sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--panel-solid);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+}
+
+.brand-mark {
+    font-size: 28px;
+    color: var(--accent);
+}
+
+.brand-text {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+}
+
+.brand-text small {
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 12px;
+    flex: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: none;
+    border: none;
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-item:hover {
+    background: var(--accent-soft);
+    color: var(--text);
+}
+
+.nav-item.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-left: 3px solid var(--accent);
+    padding-left: 11px;
+}
+
+.nav-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-footer {
+    padding: 12px;
+}
+
+.theme-toggle {
+    width: 100%;
+    padding: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 13px;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.theme-toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* ============================================
+   MAIN AREA
+   ============================================ */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.topbar {
+    height: 60px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    border-bottom: 1px solid var(--border);
+}
+
+.topbar-time {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.topbar-time span { color: var(--accent); }
+
+.topbar-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    color: var(--status);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--status);
+    box-shadow: 0 0 8px var(--status);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.content {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+}
+
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.25s ease; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.page-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: 0.3px;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: 4px;
+    margin-bottom: 24px;
+}
+#section-dashboard {
+    position: relative;
+}
+
+#section-dashboard::before {
+    content: '';
+    position: absolute;
+    top: -32px; left: -32px; right: -32px;
+    height: 280px;
+    background-image:
+            linear-gradient(180deg, rgba(10,14,18,0.75) 0%, rgba(10,14,18,0.97) 90%),
+            url('images/hero-jet.jpg');
+    background-size: cover;
+    background-position: center 35%;
+    z-index: -1;
+}
+
+/* ============================================
+   PANELS (glassmorphism + signature corner brackets)
+   ============================================ */
+.panel {
+    position: relative;
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+}
+
+/* Signature element: targeting-bracket corners */
+.panel::before,
+.panel::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: var(--accent);
+    opacity: 0.6;
+}
+.panel::before {
+    top: -1px; left: -1px;
+    border-top: 2px solid var(--accent);
+    border-left: 2px solid var(--accent);
+}
+.panel::after {
+    bottom: -1px; right: -1px;
+    border-bottom: 2px solid var(--accent);
+    border-right: 2px solid var(--accent);
+}
+
+.panel-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 17px;
+    margin-bottom: 16px;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    padding: 20px 24px;
+}
+
+.stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-family: var(--font-mono);
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--accent);
+}
+
+.chart-panel { margin-top: 8px; }
+
+.empty-state {
+    color: var(--text-muted);
+    font-size: 14px;
+    text-align: center;
+    padding: 40px 0;
+}
+
+/* ============================================
+   PAGE HEADER ROW + BUTTONS
+   ============================================ */
+.page-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #12100A;
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 20px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+    white-space: nowrap;
+}
+
+.btn-primary:hover { opacity: 0.88; }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 20px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+.btn-secondary:hover { color: var(--text); border-color: var(--text-muted); }
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 15px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+.btn-icon:hover { color: var(--accent); background: var(--accent-soft); }
+.btn-icon.danger:hover { color: var(--danger); background: rgba(196,84,74,0.12); }
+
+/* ============================================
+   DATA TABLE
+   ============================================ */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.data-table thead th {
+    text-align: left;
+    padding: 10px 14px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono);
+}
+
+.data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.data-table tbody tr:last-child td { border-bottom: none; }
+
+.data-table .actions-cell {
+    display: flex;
+    gap: 4px;
+    font-family: var(--font-body);
+}
+
+/* ============================================
+   MODAL
+   ============================================ */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(3px);
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal-overlay.active {
+    display: flex;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 20px;
+    background: var(--panel-solid);
+    backdrop-filter: none;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 22px;
+    cursor: pointer;
+    line-height: 1;
+}
+.modal-close:hover { color: var(--text); }
+
+.form-group { margin-bottom: 16px; }
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+/* ============================================
+   TOASTS
+   ============================================ */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.toast {
+    background: var(--panel-solid);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--status);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--text);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    animation: slideIn 0.25s ease;
+    min-width: 220px;
+}
+
+.toast.error { border-left-color: var(--danger); }
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 800px) {
+    .app-shell { flex-direction: column; }
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 12px;
+    }
+    .brand { display: none; }
+    .nav { flex-direction: row; padding: 0; }
+    .sidebar-footer { display: none; }
+    .content { padding: 20px; }
+}
+.brand {
+    position: relative;
+    background-image: linear-gradient(rgba(23,31,38,0.88), rgba(23,31,38,0.96)), url('images/hero-soldier.jpg');
+    background-size: cover;
+    background-position: center 20%;
+}

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battlefield Analysis Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="brand-mark">◈</span>
+            <span class="brand-text">BATTLEFIELD<br><small>ANALYSIS TOOL</small></span>
+        </div>
+
+        <nav class="nav">
+            <button class="nav-item active" data-section="dashboard">
+                <span class="nav-icon">▤</span> Dashboard
+            </button>
+            <button class="nav-item" data-section="employees">
+                <span class="nav-icon">☰</span> Employees
+            </button>
+            <button class="nav-item" data-section="weapons">
+                <span class="nav-icon">⚔</span> Weapons
+            </button>
+            <button class="nav-item" data-section="players">
+                <span class="nav-icon">◉</span> Players
+            </button>
+            <button class="nav-item" data-section="exercises">
+                <span class="nav-icon">⛿</span> Exercises
+            </button>
+            <button class="nav-item" data-section="systems">
+                <span class="nav-icon">⚙</span> Systems
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button id="themeToggle" class="theme-toggle">☾ Light Ops Mode</button>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <header class="topbar">
+            <div class="topbar-time">
+                GAME TIME: <span id="gameClock">--:--:--</span>
+            </div>
+            <div class="topbar-status">
+                <span class="status-dot"></span> SYSTEM ACTIVE
+            </div>
+        </header>
+
+        <main class="content">
+
+            <!-- DASHBOARD SECTION -->
+            <section id="section-dashboard" class="page active">
+                <h1 class="page-title">Battlefield Dashboard</h1>
+                <p class="page-subtitle">Live overview of all configuration modules</p>
+
+                <div class="card-grid">
+                    <div class="stat-card panel">
+                        <div class="stat-label">Weapons</div>
+                        <div class="stat-value" id="statWeapons">0</div>
+                    </div>
+                    <div class="stat-card panel">
+                        <div class="stat-label">Players</div>
+                        <div class="stat-value" id="statPlayers">0</div>
+                    </div>
+                    <div class="stat-card panel">
+                        <div class="stat-label">Exercises</div>
+                        <div class="stat-value" id="statExercises">0</div>
+                    </div>
+                    <div class="stat-card panel">
+                        <div class="stat-label">Systems</div>
+                        <div class="stat-value" id="statSystems">0</div>
+                    </div>
+                </div>
+
+                <div class="panel chart-panel">
+                    <h2 class="panel-title">Resource Allocation Overview</h2>
+                    <canvas id="overviewChart" height="90"></canvas>
+                </div>
+            </section>
+
+            <!-- EMPLOYEES SECTION -->
+            <section id="section-employees" class="page">
+                <h1 class="page-title">Employees</h1>
+                <div class="panel">
+                    <p class="empty-state">Employee module UI coming in the next build phase.</p>
+                </div>
+            </section>
+
+            <!-- WEAPONS SECTION -->
+            <section id="section-weapons" class="page">
+                <div class="page-header-row">
+                    <div>
+                        <h1 class="page-title">Weapon Configuration</h1>
+                        <p class="page-subtitle">Manage weapon types, range, and stock levels</p>
+                    </div>
+                    <button class="btn-primary" onclick="openModal('weapons')">+ Add Weapon</button>
+                </div>
+                <div class="panel">
+                    <table class="data-table" id="table-weapons">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- PLAYERS SECTION -->
+
+            <section id="section-players" class="page">
+                <div class="page-header-row">
+                    <div>
+                        <h1 class="page-title">Player Configuration</h1>
+                        <p class="page-subtitle">Manage player roster, roles, and units</p>
+                    </div>
+                    <button class="btn-primary" onclick="openModal('players')">+ Add Player</button>
+                </div>
+                <div class="panel">
+                    <table class="data-table" id="table-players">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- EXERCISES SECTION -->
+            <section id="section-exercises" class="page">
+                <div class="page-header-row">
+                    <div>
+                        <h1 class="page-title">Exercise Configuration</h1>
+                        <p class="page-subtitle">Manage battlefield exercises and missions</p>
+                    </div>
+                    <button class="btn-primary" onclick="openModal('exercises')">+ Add Exercise</button>
+                </div>
+                <div class="panel">
+                    <table class="data-table" id="table-exercises">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SYSTEMS SECTION -->
+            <section id="section-systems" class="page">
+                <div class="page-header-row">
+                    <div>
+                        <h1 class="page-title">System Configuration</h1>
+                        <p class="page-subtitle">Manage resource types and allocation</p>
+                    </div>
+                    <button class="btn-primary" onclick="openModal('systems')">+ Add System</button>
+                </div>
+                <div class="panel">
+                    <table class="data-table" id="table-systems">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- SHARED MODAL — reused for every entity type -->
+<div id="modalOverlay" class="modal-overlay">
+    <div class="modal panel">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add Item</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="modalForm"></form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
