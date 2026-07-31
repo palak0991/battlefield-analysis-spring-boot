@@ -66,6 +66,10 @@
 
                 <div class="card-grid">
                     <div class="stat-card panel">
+                        <div class="stat-label">Employees</div>
+                        <div class="stat-value" id="statEmployees">0</div>
+                    </div>
+                    <div class="stat-card panel">
                         <div class="stat-label">Weapons</div>
                         <div class="stat-value" id="statWeapons">0</div>
                     </div>
@@ -91,9 +95,22 @@
 
             <!-- EMPLOYEES SECTION -->
             <section id="section-employees" class="page">
-                <h1 class="page-title">Employees</h1>
+                <div class="page-header-row">
+                    <div>
+                        <h1 class="page-title">Employees</h1>
+                        <p class="page-subtitle">Manage employee records</p>
+                    </div>
+                    <div class="header-actions">
+                        <input type="text" class="search-input" placeholder="Search employees..." oninput="filterTable('employees', this.value)">
+                        <button class="btn-secondary" onclick="loadTable('employees')">↻ Refresh</button>
+                        <button class="btn-primary" onclick="openModal('employees')">+ Add Employee</button>
+                    </div>
+                </div>
                 <div class="panel">
-                    <p class="empty-state">Employee module UI coming in the next build phase.</p>
+                    <table class="data-table" id="table-employees">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </section>
 
@@ -104,7 +121,11 @@
                         <h1 class="page-title">Weapon Configuration</h1>
                         <p class="page-subtitle">Manage weapon types, range, and stock levels</p>
                     </div>
-                    <button class="btn-primary" onclick="openModal('weapons')">+ Add Weapon</button>
+                    <div class="header-actions">
+                        <input type="text" class="search-input" placeholder="Search weapons..." oninput="filterTable('weapons', this.value)">
+                        <button class="btn-secondary" onclick="loadTable('weapons')">↻ Refresh</button>
+                        <button class="btn-primary" onclick="openModal('weapons')">+ Add Weapon</button>
+                    </div>
                 </div>
                 <div class="panel">
                     <table class="data-table" id="table-weapons">
@@ -115,14 +136,17 @@
             </section>
 
             <!-- PLAYERS SECTION -->
-
             <section id="section-players" class="page">
                 <div class="page-header-row">
                     <div>
                         <h1 class="page-title">Player Configuration</h1>
                         <p class="page-subtitle">Manage player roster, roles, and units</p>
                     </div>
-                    <button class="btn-primary" onclick="openModal('players')">+ Add Player</button>
+                    <div class="header-actions">
+                        <input type="text" class="search-input" placeholder="Search players..." oninput="filterTable('players', this.value)">
+                        <button class="btn-secondary" onclick="loadTable('players')">↻ Refresh</button>
+                        <button class="btn-primary" onclick="openModal('players')">+ Add Player</button>
+                    </div>
                 </div>
                 <div class="panel">
                     <table class="data-table" id="table-players">
@@ -139,7 +163,11 @@
                         <h1 class="page-title">Exercise Configuration</h1>
                         <p class="page-subtitle">Manage battlefield exercises and missions</p>
                     </div>
-                    <button class="btn-primary" onclick="openModal('exercises')">+ Add Exercise</button>
+                    <div class="header-actions">
+                        <input type="text" class="search-input" placeholder="Search exercises..." oninput="filterTable('exercises', this.value)">
+                        <button class="btn-secondary" onclick="loadTable('exercises')">↻ Refresh</button>
+                        <button class="btn-primary" onclick="openModal('exercises')">+ Add Exercise</button>
+                    </div>
                 </div>
                 <div class="panel">
                     <table class="data-table" id="table-exercises">
@@ -156,7 +184,11 @@
                         <h1 class="page-title">System Configuration</h1>
                         <p class="page-subtitle">Manage resource types and allocation</p>
                     </div>
-                    <button class="btn-primary" onclick="openModal('systems')">+ Add System</button>
+                    <div class="header-actions">
+                        <input type="text" class="search-input" placeholder="Search systems..." oninput="filterTable('systems', this.value)">
+                        <button class="btn-secondary" onclick="loadTable('systems')">↻ Refresh</button>
+                        <button class="btn-primary" onclick="openModal('systems')">+ Add System</button>
+                    </div>
                 </div>
                 <div class="panel">
                     <table class="data-table" id="table-systems">

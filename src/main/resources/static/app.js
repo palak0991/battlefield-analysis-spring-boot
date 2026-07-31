@@ -198,7 +198,22 @@ const entityConfigs = {
             { key: 'total', label: 'Total', type: 'number' },
             { key: 'current', label: 'Current', type: 'number' }
         ]
+    },
+    employees: {
+        apiPath: '/api/employees',
+        title: 'Employee',
+        columns: [
+            { key: 'firstName', label: 'First Name' },
+            { key: 'lastName', label: 'Last Name' },
+            { key: 'email', label: 'Email' }
+        ],
+        fields: [
+            { key: 'firstName', label: 'First Name', type: 'text' },
+            { key: 'lastName', label: 'Last Name', type: 'text' },
+            { key: 'email', label: 'Email', type: 'email' }
+        ]
     }
+
     // players, exercises, systems, employees configs go here next session
 };
 
