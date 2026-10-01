@@ -143,15 +143,16 @@ const entityConfigs = {
             { key: 'weaponType', label: 'Weapon Type' },
             { key: 'range', label: 'Range' },
             { key: 'total', label: 'Total' },
-            { key: 'current', label: 'Current' }
+            { key: 'current', label: 'Current' },
+            { key: 'player', label: 'Assigned To', render: (r) => r.player ? r.player.playerName : '—' }
         ],
         fields: [
             { key: 'weaponType', label: 'Weapon Type', type: 'text' },
             { key: 'range', label: 'Range', type: 'number' },
             { key: 'total', label: 'Total', type: 'number' },
-            { key: 'current', label: 'Current', type: 'number' }
+            { key: 'current', label: 'Current', type: 'number' },
+            { key: 'player', label: 'Assign to Player', type: 'select', optionsFrom: 'players', optionLabel: 'playerName' }
         ]
-
     },
     players: {
         apiPath: '/api/players',
@@ -160,13 +161,15 @@ const entityConfigs = {
             { key: 'playerName', label: 'Player Name' },
             { key: 'role', label: 'Role' },
             { key: 'unit', label: 'Unit' },
-            { key: 'totalLoginTime', label: 'Login Time (hrs)' }
+            { key: 'totalLoginTime', label: 'Login Time (hrs)' },
+            { key: 'exercise', label: 'Exercise', render: (r) => r.exercise ? r.exercise.name : '—' }
         ],
         fields: [
             { key: 'playerName', label: 'Player Name', type: 'text' },
             { key: 'role', label: 'Role', type: 'text' },
             { key: 'unit', label: 'Unit', type: 'text' },
-            { key: 'totalLoginTime', label: 'Login Time (hrs)', type: 'number' }
+            { key: 'totalLoginTime', label: 'Login Time (hrs)', type: 'number' },
+            { key: 'exercise', label: 'Assigned Exercise', type: 'select', optionsFrom: 'exercises', optionLabel: 'name' }
         ]
     },
     exercises: {
@@ -191,12 +194,14 @@ const entityConfigs = {
         columns: [
             { key: 'resourceType', label: 'Resource Type' },
             { key: 'total', label: 'Total' },
-            { key: 'current', label: 'Current' }
+            { key: 'current', label: 'Current' },
+            { key: 'exercise', label: 'Exercise', render: (r) => r.exercise ? r.exercise.name : '—' }
         ],
         fields: [
             { key: 'resourceType', label: 'Resource Type', type: 'text' },
             { key: 'total', label: 'Total', type: 'number' },
-            { key: 'current', label: 'Current', type: 'number' }
+            { key: 'current', label: 'Current', type: 'number' },
+            { key: 'exercise', label: 'Assigned Exercise', type: 'select', optionsFrom: 'exercises', optionLabel: 'name' }
         ]
     },
     employees: {
@@ -245,7 +250,7 @@ async function loadTable(entityKey) {
 
         tbody.innerHTML = records.map(record => `
       <tr>
-        ${config.columns.map(c => `<td>${record[c.key]}</td>`).join('')}
+        ${config.columns.map(c => `<td>${c.render ? c.render(record) : (record[c.key] ?? '')}</td>`).join('')}
         <td class="actions-cell">
           <button class="btn-icon" onclick='openModal("${entityKey}", ${JSON.stringify(record)})'>✎ Edit</button>
           <button class="btn-icon danger" onclick="deleteRecord('${entityKey}', ${record.id})">✕ Delete</button>
@@ -261,7 +266,7 @@ async function loadTable(entityKey) {
 // ============================================
 // MODAL — open (for add or edit), close, submit
 // ============================================
-function openModal(entityKey, record = null) {
+async function openModal(entityKey, record = null) {
     const config = entityConfigs[entityKey];
     currentEntityKey = entityKey;
     currentEditId = record ? record.id : null;
@@ -270,12 +275,36 @@ function openModal(entityKey, record = null) {
         (record ? 'Edit ' : 'Add ') + config.title;
 
     const form = document.getElementById('modalForm');
-    form.innerHTML = config.fields.map(f => `
-    <div class="form-group">
-      <label>${f.label}</label>
-      <input type="${f.type}" name="${f.key}" value="${record ? record[f.key] : ''}" required>
-    </div>
-  `).join('') + `
+    form.innerHTML = '<p class="empty-state">Loading form...</p>';
+    document.getElementById('modalOverlay').classList.add('active');
+
+    // Build each field, fetching dropdown options for 'select' type fields
+    const fieldHtmlParts = await Promise.all(config.fields.map(async (f) => {
+        if (f.type === 'select') {
+            const options = await fetch(entityConfigs[f.optionsFrom].apiPath).then(r => r.json());
+            const currentValue = record && record[f.key] ? record[f.key].id : '';
+            const optionTags = options.map(opt =>
+                `<option value="${opt.id}" ${String(opt.id) === String(currentValue) ? 'selected' : ''}>${opt[f.optionLabel]}</option>`
+            ).join('');
+            return `
+        <div class="form-group">
+          <label>${f.label}</label>
+          <select name="${f.key}">
+            <option value="">-- None --</option>
+            ${optionTags}
+          </select>
+        </div>
+      `;
+        }
+        return `
+      <div class="form-group">
+        <label>${f.label}</label>
+        <input type="${f.type}" name="${f.key}" value="${record ? (record[f.key] ?? '') : ''}" ${f.type === 'select' ? '' : 'required'}>
+      </div>
+    `;
+    }));
+
+    form.innerHTML = fieldHtmlParts.join('') + `
     <div class="modal-actions">
       <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
       <button type="submit" class="btn-primary">Save</button>
@@ -286,8 +315,6 @@ function openModal(entityKey, record = null) {
         e.preventDefault();
         submitForm(entityKey);
     };
-
-    document.getElementById('modalOverlay').classList.add('active');
 }
 
 function closeModal() {
@@ -304,7 +331,13 @@ async function submitForm(entityKey) {
     const payload = {};
     config.fields.forEach(f => {
         const raw = formData.get(f.key);
-        payload[f.key] = f.type === 'number' ? Number(raw) : raw;
+        if (f.type === 'number') {
+            payload[f.key] = Number(raw);
+        } else if (f.type === 'select') {
+            payload[f.key] = raw ? { id: Number(raw) } : null;
+        } else {
+            payload[f.key] = raw;
+        }
     });
 
     const isEdit = currentEditId !== null;

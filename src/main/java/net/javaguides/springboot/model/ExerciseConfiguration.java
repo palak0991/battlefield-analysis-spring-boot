@@ -7,6 +7,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
+import java.util.List;
 
 @Data
 @Entity
@@ -28,4 +32,12 @@ public class ExerciseConfiguration {
 
     @Column(name = "commander")
     private String commander;
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<PlayerConfiguration> players;
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<SystemConfiguration> systems;
 }
