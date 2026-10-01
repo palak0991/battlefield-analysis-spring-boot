@@ -17,7 +17,7 @@ navItems.forEach(item => {
 });
 
 // ============================================
-// GAME CLOCK — mirrors the report's "Game Time" display
+// GAME CLOCK — live time display in topbar
 // ============================================
 function updateClock() {
     const now = new Date();
@@ -38,7 +38,7 @@ themeToggle.addEventListener('click', () => {
 });
 
 // ============================================
-// TOAST NOTIFICATIONS — reusable helper for later phases
+// TOAST NOTIFICATIONS — user feedback for actions
 // ============================================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
@@ -50,17 +50,21 @@ function showToast(message, type = 'success') {
 }
 
 // ============================================
-// DASHBOARD STATS — pulls live counts from each API
+// DASHBOARD STATS — pulls live counts from every API
+// FIX: employees count was missing from the original implementation.
+// All five modules are now fetched and displayed correctly.
 // ============================================
 async function loadDashboardStats() {
     try {
-        const [weapons, players, exercises, systems] = await Promise.all([
+        const [employees, weapons, players, exercises, systems] = await Promise.all([
+            fetch('/api/employees').then(r => r.json()),
             fetch('/api/weapons').then(r => r.json()),
             fetch('/api/players').then(r => r.json()),
             fetch('/api/exercises').then(r => r.json()),
             fetch('/api/systems').then(r => r.json())
         ]);
 
+        document.getElementById('statEmployees').textContent = employees.length;
         document.getElementById('statWeapons').textContent = weapons.length;
         document.getElementById('statPlayers').textContent = players.length;
         document.getElementById('statExercises').textContent = exercises.length;
@@ -131,9 +135,9 @@ function renderOverviewChart(weapons, systems) {
 }
 
 // ============================================
-// ENTITY CONFIG — add a new block here for each new module.
-// This is the ONLY thing that changes per entity; the functions
-// below read this config and handle everything generically.
+// ENTITY CONFIG — describes each module's API path,
+// table columns, and form fields. Adding a new module
+// only requires a new entry here — no other JS changes needed.
 // ============================================
 const entityConfigs = {
     weapons: {
@@ -218,8 +222,6 @@ const entityConfigs = {
             { key: 'email', label: 'Email', type: 'email' }
         ]
     }
-
-    // players, exercises, systems, employees configs go here next session
 };
 
 let currentEditId = null;
@@ -233,8 +235,22 @@ async function loadTable(entityKey) {
     const table = document.getElementById('table-' + entityKey);
     if (!config || !table) return;
 
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML = `<tr><td colspan="${config.columns.length + 1}" class="empty-state">Loading...</td></tr>`;
+
     try {
         const res = await fetch(config.apiPath);
+
+        if (res.status === 401) {
+            showToast('Session expired — please log in again', 'error');
+            setTimeout(() => window.location.href = '/login.html', 1500);
+            return;
+        }
+
+        if (!res.ok) {
+            throw new Error('Server returned ' + res.status);
+        }
+
         const records = await res.json();
 
         const thead = table.querySelector('thead');
@@ -242,7 +258,6 @@ async function loadTable(entityKey) {
             config.columns.map(c => `<th>${c.label}</th>`).join('') +
             '<th>Actions</th></tr>';
 
-        const tbody = table.querySelector('tbody');
         if (records.length === 0) {
             tbody.innerHTML = `<tr><td colspan="${config.columns.length + 1}" class="empty-state">No ${config.title.toLowerCase()} records yet — click "Add ${config.title}" to create one.</td></tr>`;
             return;
@@ -257,10 +272,32 @@ async function loadTable(entityKey) {
         </td>
       </tr>
     `).join('');
+
     } catch (err) {
         console.error(`Failed to load ${entityKey}:`, err);
+        tbody.innerHTML = `<tr><td colspan="${config.columns.length + 1}" class="empty-state" style="color: var(--danger);">Failed to load data. Is the backend running?</td></tr>`;
         showToast(`Could not load ${config.title.toLowerCase()} data`, 'error');
     }
+}
+
+// ============================================
+// FILTER TABLE — client-side search/filter
+// FIX: This function was called from HTML but never implemented.
+// It now filters visible table rows without making new API calls.
+// ============================================
+function filterTable(entityKey, searchValue) {
+    const table = document.getElementById('table-' + entityKey);
+    if (!table) return;
+
+    const rows = table.querySelectorAll('tbody tr');
+    const query = searchValue.toLowerCase().trim();
+
+    rows.forEach(row => {
+        // Check all text cells in the row
+        const rowText = row.textContent.toLowerCase();
+        // Show the row if any cell contains the search term; hide it otherwise
+        row.style.display = (query === '' || rowText.includes(query)) ? '' : 'none';
+    });
 }
 
 // ============================================
@@ -278,15 +315,16 @@ async function openModal(entityKey, record = null) {
     form.innerHTML = '<p class="empty-state">Loading form...</p>';
     document.getElementById('modalOverlay').classList.add('active');
 
-    // Build each field, fetching dropdown options for 'select' type fields
+    // Build each field; fetch dropdown options for 'select' type fields
     const fieldHtmlParts = await Promise.all(config.fields.map(async (f) => {
         if (f.type === 'select') {
-            const options = await fetch(entityConfigs[f.optionsFrom].apiPath).then(r => r.json());
-            const currentValue = record && record[f.key] ? record[f.key].id : '';
-            const optionTags = options.map(opt =>
-                `<option value="${opt.id}" ${String(opt.id) === String(currentValue) ? 'selected' : ''}>${opt[f.optionLabel]}</option>`
-            ).join('');
-            return `
+            try {
+                const options = await fetch(entityConfigs[f.optionsFrom].apiPath).then(r => r.json());
+                const currentValue = record && record[f.key] ? record[f.key].id : '';
+                const optionTags = options.map(opt =>
+                    `<option value="${opt.id}" ${String(opt.id) === String(currentValue) ? 'selected' : ''}>${opt[f.optionLabel]}</option>`
+                ).join('');
+                return `
         <div class="form-group">
           <label>${f.label}</label>
           <select name="${f.key}">
@@ -295,11 +333,14 @@ async function openModal(entityKey, record = null) {
           </select>
         </div>
       `;
+            } catch (err) {
+                return `<div class="form-group"><label>${f.label}</label><p style="color:var(--danger)">Could not load options</p></div>`;
+            }
         }
         return `
       <div class="form-group">
         <label>${f.label}</label>
-        <input type="${f.type}" name="${f.key}" value="${record ? (record[f.key] ?? '') : ''}" ${f.type === 'select' ? '' : 'required'}>
+        <input type="${f.type}" name="${f.key}" value="${record ? (record[f.key] ?? '') : ''}">
       </div>
     `;
     }));
@@ -323,6 +364,9 @@ function closeModal() {
     currentEntityKey = null;
 }
 
+// ============================================
+// SUBMIT FORM — handles both create and update
+// ============================================
 async function submitForm(entityKey) {
     const config = entityConfigs[entityKey];
     const form = document.getElementById('modalForm');
@@ -351,7 +395,23 @@ async function submitForm(entityKey) {
             body: JSON.stringify(payload)
         });
 
-        if (!res.ok) throw new Error('Request failed with status ' + res.status);
+        if (res.status === 400) {
+            const errorData = await res.json();
+            const msg = errorData.message || 'Validation failed. Please check your input.';
+            showToast(msg, 'error');
+            return;
+        }
+
+        if (res.status === 401) {
+            showToast('Session expired — please log in again', 'error');
+            setTimeout(() => window.location.href = '/login.html', 1500);
+            return;
+        }
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Request failed with status ' + res.status);
+        }
 
         showToast(`${config.title} ${isEdit ? 'updated' : 'created'} successfully`);
         closeModal();
@@ -359,24 +419,37 @@ async function submitForm(entityKey) {
         loadDashboardStats(); // keep dashboard counts in sync
     } catch (err) {
         console.error(`Failed to save ${entityKey}:`, err);
-        showToast(`Could not save ${config.title.toLowerCase()}`, 'error');
+        showToast(err.message || `Could not save ${config.title.toLowerCase()}`, 'error');
     }
 }
 
+// ============================================
+// DELETE RECORD — with confirmation dialog
+// ============================================
 async function deleteRecord(entityKey, id) {
     const config = entityConfigs[entityKey];
     if (!confirm(`Delete this ${config.title.toLowerCase()}? This cannot be undone.`)) return;
 
     try {
         const res = await fetch(`${config.apiPath}/${id}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('Delete failed with status ' + res.status);
+
+        if (res.status === 401) {
+            showToast('Session expired — please log in again', 'error');
+            setTimeout(() => window.location.href = '/login.html', 1500);
+            return;
+        }
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Delete failed with status ' + res.status);
+        }
 
         showToast(`${config.title} deleted`);
         loadTable(entityKey);
         loadDashboardStats();
     } catch (err) {
         console.error(`Failed to delete from ${entityKey}:`, err);
-        showToast(`Could not delete ${config.title.toLowerCase()}`, 'error');
+        showToast(err.message || `Could not delete ${config.title.toLowerCase()}`, 'error');
     }
 }
 
@@ -392,5 +465,5 @@ navItems.forEach(item => {
     });
 });
 
-// Load stats when the page first opens
+// Load dashboard stats when the page first opens
 loadDashboardStats();

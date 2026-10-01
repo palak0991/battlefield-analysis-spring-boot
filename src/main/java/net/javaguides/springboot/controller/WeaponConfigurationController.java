@@ -1,54 +1,69 @@
 package net.javaguides.springboot.controller;
 
-import java.util.List;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import jakarta.validation.Valid;
 import net.javaguides.springboot.model.WeaponConfiguration;
 import net.javaguides.springboot.service.WeaponConfigurationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+/**
+ * REST controller for Weapon Configuration CRUD operations.
+ * Base URL: /api/weapons
+ */
 @RestController
 @RequestMapping("/api/weapons")
 public class WeaponConfigurationController {
 
-    private WeaponConfigurationService weaponConfigurationService;
+    private static final Logger log = LoggerFactory.getLogger(WeaponConfigurationController.class);
+
+    private final WeaponConfigurationService weaponConfigurationService;
 
     public WeaponConfigurationController(WeaponConfigurationService weaponConfigurationService) {
         this.weaponConfigurationService = weaponConfigurationService;
     }
 
-    @PostMapping()
-    public ResponseEntity<WeaponConfiguration> saveWeaponConfiguration(@RequestBody WeaponConfiguration weaponConfiguration) {
-        return new ResponseEntity<>(weaponConfigurationService.saveWeaponConfiguration(weaponConfiguration), HttpStatus.CREATED);
+    // POST /api/weapons
+    @PostMapping
+    public ResponseEntity<WeaponConfiguration> createWeapon(
+            @Valid @RequestBody WeaponConfiguration weapon) {
+        log.info("Request to create weapon: {}", weapon.getWeaponType());
+        return new ResponseEntity<>(weaponConfigurationService.saveWeaponConfiguration(weapon), HttpStatus.CREATED);
     }
 
+    // GET /api/weapons
     @GetMapping
-    public List<WeaponConfiguration> getAllWeaponConfigurations() {
-        return weaponConfigurationService.getAllWeaponConfigurations();
+    public ResponseEntity<List<WeaponConfiguration>> getAllWeapons() {
+        List<WeaponConfiguration> weapons = weaponConfigurationService.getAllWeaponConfigurations();
+        log.debug("Returning {} weapon configurations", weapons.size());
+        return ResponseEntity.ok(weapons);
     }
 
-    @GetMapping("{id}")
-    public ResponseEntity<WeaponConfiguration> getWeaponConfigurationById(@PathVariable("id") long id) {
-        return new ResponseEntity<>(weaponConfigurationService.getWeaponConfigurationById(id), HttpStatus.OK);
+    // GET /api/weapons/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<WeaponConfiguration> getWeaponById(@PathVariable long id) {
+        log.debug("Request to get weapon with id: {}", id);
+        return ResponseEntity.ok(weaponConfigurationService.getWeaponConfigurationById(id));
     }
 
-    @PutMapping("{id}")
-    public ResponseEntity<WeaponConfiguration> updateWeaponConfiguration(@PathVariable("id") long id, @RequestBody WeaponConfiguration weaponConfiguration) {
-        return new ResponseEntity<>(weaponConfigurationService.updateWeaponConfiguration(weaponConfiguration, id), HttpStatus.OK);
+    // PUT /api/weapons/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<WeaponConfiguration> updateWeapon(
+            @PathVariable long id,
+            @Valid @RequestBody WeaponConfiguration weapon) {
+        log.info("Request to update weapon with id: {}", id);
+        return ResponseEntity.ok(weaponConfigurationService.updateWeaponConfiguration(weapon, id));
     }
 
-    @DeleteMapping("{id}")
-    public ResponseEntity<String> deleteWeaponConfiguration(@PathVariable("id") long id) {
+    // DELETE /api/weapons/{id}
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteWeapon(@PathVariable long id) {
+        log.info("Request to delete weapon with id: {}", id);
         weaponConfigurationService.deleteWeaponConfiguration(id);
-        return new ResponseEntity<>("Weapon configuration deleted successfully!", HttpStatus.OK);
+        return ResponseEntity.ok("Weapon configuration deleted successfully");
     }
 }

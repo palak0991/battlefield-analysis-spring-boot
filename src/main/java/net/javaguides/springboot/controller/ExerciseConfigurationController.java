@@ -1,54 +1,69 @@
 package net.javaguides.springboot.controller;
 
-import java.util.List;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import jakarta.validation.Valid;
 import net.javaguides.springboot.model.ExerciseConfiguration;
 import net.javaguides.springboot.service.ExerciseConfigurationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+/**
+ * REST controller for Exercise Configuration CRUD operations.
+ * Base URL: /api/exercises
+ */
 @RestController
 @RequestMapping("/api/exercises")
 public class ExerciseConfigurationController {
 
-    private ExerciseConfigurationService exerciseConfigurationService;
+    private static final Logger log = LoggerFactory.getLogger(ExerciseConfigurationController.class);
+
+    private final ExerciseConfigurationService exerciseConfigurationService;
 
     public ExerciseConfigurationController(ExerciseConfigurationService exerciseConfigurationService) {
         this.exerciseConfigurationService = exerciseConfigurationService;
     }
 
-    @PostMapping()
-    public ResponseEntity<ExerciseConfiguration> saveExerciseConfiguration(@RequestBody ExerciseConfiguration exerciseConfiguration) {
-        return new ResponseEntity<>(exerciseConfigurationService.saveExerciseConfiguration(exerciseConfiguration), HttpStatus.CREATED);
+    // POST /api/exercises
+    @PostMapping
+    public ResponseEntity<ExerciseConfiguration> createExercise(
+            @Valid @RequestBody ExerciseConfiguration exercise) {
+        log.info("Request to create exercise: {}", exercise.getName());
+        return new ResponseEntity<>(exerciseConfigurationService.saveExerciseConfiguration(exercise), HttpStatus.CREATED);
     }
 
+    // GET /api/exercises
     @GetMapping
-    public List<ExerciseConfiguration> getAllExerciseConfigurations() {
-        return exerciseConfigurationService.getAllExerciseConfigurations();
+    public ResponseEntity<List<ExerciseConfiguration>> getAllExercises() {
+        List<ExerciseConfiguration> exercises = exerciseConfigurationService.getAllExerciseConfigurations();
+        log.debug("Returning {} exercise configurations", exercises.size());
+        return ResponseEntity.ok(exercises);
     }
 
-    @GetMapping("{id}")
-    public ResponseEntity<ExerciseConfiguration> getExerciseConfigurationById(@PathVariable("id") long id) {
-        return new ResponseEntity<>(exerciseConfigurationService.getExerciseConfigurationById(id), HttpStatus.OK);
+    // GET /api/exercises/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<ExerciseConfiguration> getExerciseById(@PathVariable long id) {
+        log.debug("Request to get exercise with id: {}", id);
+        return ResponseEntity.ok(exerciseConfigurationService.getExerciseConfigurationById(id));
     }
 
-    @PutMapping("{id}")
-    public ResponseEntity<ExerciseConfiguration> updateExerciseConfiguration(@PathVariable("id") long id, @RequestBody ExerciseConfiguration exerciseConfiguration) {
-        return new ResponseEntity<>(exerciseConfigurationService.updateExerciseConfiguration(exerciseConfiguration, id), HttpStatus.OK);
+    // PUT /api/exercises/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<ExerciseConfiguration> updateExercise(
+            @PathVariable long id,
+            @Valid @RequestBody ExerciseConfiguration exercise) {
+        log.info("Request to update exercise with id: {}", id);
+        return ResponseEntity.ok(exerciseConfigurationService.updateExerciseConfiguration(exercise, id));
     }
 
-    @DeleteMapping("{id}")
-    public ResponseEntity<String> deleteExerciseConfiguration(@PathVariable("id") long id) {
+    // DELETE /api/exercises/{id}
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteExercise(@PathVariable long id) {
+        log.info("Request to delete exercise with id: {}", id);
         exerciseConfigurationService.deleteExerciseConfiguration(id);
-        return new ResponseEntity<>("Exercise configuration deleted successfully!", HttpStatus.OK);
+        return ResponseEntity.ok("Exercise configuration deleted successfully");
     }
 }

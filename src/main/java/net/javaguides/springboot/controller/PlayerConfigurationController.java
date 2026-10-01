@@ -1,54 +1,69 @@
 package net.javaguides.springboot.controller;
 
-import java.util.List;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import jakarta.validation.Valid;
 import net.javaguides.springboot.model.PlayerConfiguration;
 import net.javaguides.springboot.service.PlayerConfigurationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+/**
+ * REST controller for Player Configuration CRUD operations.
+ * Base URL: /api/players
+ */
 @RestController
 @RequestMapping("/api/players")
 public class PlayerConfigurationController {
 
-    private PlayerConfigurationService playerConfigurationService;
+    private static final Logger log = LoggerFactory.getLogger(PlayerConfigurationController.class);
+
+    private final PlayerConfigurationService playerConfigurationService;
 
     public PlayerConfigurationController(PlayerConfigurationService playerConfigurationService) {
         this.playerConfigurationService = playerConfigurationService;
     }
 
-    @PostMapping()
-    public ResponseEntity<PlayerConfiguration> savePlayerConfiguration(@RequestBody PlayerConfiguration playerConfiguration) {
-        return new ResponseEntity<>(playerConfigurationService.savePlayerConfiguration(playerConfiguration), HttpStatus.CREATED);
+    // POST /api/players
+    @PostMapping
+    public ResponseEntity<PlayerConfiguration> createPlayer(
+            @Valid @RequestBody PlayerConfiguration player) {
+        log.info("Request to create player: {}", player.getPlayerName());
+        return new ResponseEntity<>(playerConfigurationService.savePlayerConfiguration(player), HttpStatus.CREATED);
     }
 
+    // GET /api/players
     @GetMapping
-    public List<PlayerConfiguration> getAllPlayerConfigurations() {
-        return playerConfigurationService.getAllPlayerConfigurations();
+    public ResponseEntity<List<PlayerConfiguration>> getAllPlayers() {
+        List<PlayerConfiguration> players = playerConfigurationService.getAllPlayerConfigurations();
+        log.debug("Returning {} player configurations", players.size());
+        return ResponseEntity.ok(players);
     }
 
-    @GetMapping("{id}")
-    public ResponseEntity<PlayerConfiguration> getPlayerConfigurationById(@PathVariable("id") long id) {
-        return new ResponseEntity<>(playerConfigurationService.getPlayerConfigurationById(id), HttpStatus.OK);
+    // GET /api/players/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<PlayerConfiguration> getPlayerById(@PathVariable long id) {
+        log.debug("Request to get player with id: {}", id);
+        return ResponseEntity.ok(playerConfigurationService.getPlayerConfigurationById(id));
     }
 
-    @PutMapping("{id}")
-    public ResponseEntity<PlayerConfiguration> updatePlayerConfiguration(@PathVariable("id") long id, @RequestBody PlayerConfiguration playerConfiguration) {
-        return new ResponseEntity<>(playerConfigurationService.updatePlayerConfiguration(playerConfiguration, id), HttpStatus.OK);
+    // PUT /api/players/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<PlayerConfiguration> updatePlayer(
+            @PathVariable long id,
+            @Valid @RequestBody PlayerConfiguration player) {
+        log.info("Request to update player with id: {}", id);
+        return ResponseEntity.ok(playerConfigurationService.updatePlayerConfiguration(player, id));
     }
 
-    @DeleteMapping("{id}")
-    public ResponseEntity<String> deletePlayerConfiguration(@PathVariable("id") long id) {
+    // DELETE /api/players/{id}
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deletePlayer(@PathVariable long id) {
+        log.info("Request to delete player with id: {}", id);
         playerConfigurationService.deletePlayerConfiguration(id);
-        return new ResponseEntity<>("Player configuration deleted successfully!", HttpStatus.OK);
+        return ResponseEntity.ok("Player configuration deleted successfully");
     }
 }
