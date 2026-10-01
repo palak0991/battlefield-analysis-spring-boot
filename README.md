@@ -6,28 +6,34 @@ Developed during a DRDO internship (Institute for Systems Studies and Analyses, 
 
 ## Current status
 
-This project is under active, incremental development. The core CRUD backend and dashboard frontend are fully functional. Authentication, entity relationships, and further polish are in progress — see "Roadmap" below for what's planned but not yet built.
+Core CRUD backend, relational data model, Spring Security authentication, and the dashboard frontend are all fully functional. Role-based access control and automated tests are still on the roadmap — see below.
 
 ## Tech stack
 
-- **Java 17**
-- **Spring Boot 3.4.5**
-- **Spring Data JPA** / **Hibernate 6.6** (ORM)
-- **PostgreSQL 17**
-- **Maven** (with Maven Wrapper — no local Maven install required)
-- **Lombok** (reduces boilerplate getter/setter/constructor code)
-- **Vanilla HTML/CSS/JavaScript** frontend (no framework)
-- **Chart.js** for dashboard data visualization
+| Layer | Technology |
+|---|---|
+| Language | Java 17 |
+| Framework | Spring Boot 3.4.13 |
+| ORM | Spring Data JPA / Hibernate 6 |
+| Security | Spring Security 6 (form login, BCrypt) |
+| Validation | Spring Boot Starter Validation |
+| Database | PostgreSQL 17 |
+| Build | Maven (wrapper included — no local install needed) |
+| Boilerplate reduction | Lombok 1.18.38 |
+| Frontend | Vanilla HTML / CSS / JavaScript |
+| Charts | Chart.js |
 
-> Note: `spring-boot-starter-thymeleaf` is present as a dependency but is not actively used — the frontend is plain HTML/CSS/JS served as static resources, not server-rendered Thymeleaf templates.
+> `spring-boot-starter-thymeleaf` is present as a dependency but is not actively used — the frontend is plain HTML/CSS/JS served as static resources, not server-rendered Thymeleaf templates.
 
 ## Architecture
 
 Layered architecture, consistent across every module:
 
 ```
-Browser (HTML/CSS/JS)
+Browser (HTML / CSS / JS)
     │  fetch() → REST calls
+    ▼
+SecurityFilterChain  (Spring Security — protects all routes, custom login page)
     ▼
 Controller  (@RestController — handles HTTP requests/responses)
     ▼
@@ -38,48 +44,81 @@ Repository  (Spring Data JPA — extends JpaRepository, no manual SQL)
 PostgreSQL Database
 ```
 
-Each entity (Employee, Weapon, Player, Exercise, System configuration) follows this same five-file pattern: Entity → Repository → Service → ServiceImpl → Controller.
+Each entity follows the same five-file pattern:
+**Entity → Repository → Service interface → ServiceImpl → Controller**
+
+## Entity relationships
+
+The data model now uses JPA associations instead of four independent tables:
+
+```
+ExerciseConfiguration (1)
+    ├──< PlayerConfiguration (many)   [@ManyToOne exercise_id FK]
+    │       └──< WeaponConfiguration (many)  [@ManyToOne player_id FK]
+    └──< SystemConfiguration (many)   [@ManyToOne exercise_id FK]
+```
+
+| Entity | Key fields |
+|---|---|
+| `ExerciseConfiguration` | name, location, date, commander |
+| `PlayerConfiguration` | playerName, role, unit, totalLoginTime, exercise (FK) |
+| `WeaponConfiguration` | weaponType, range, total, current, player (FK) |
+| `SystemConfiguration` | resourceType, total, current, exercise (FK) |
+| `Employee` | firstName, lastName, emailId |
 
 ## Project structure
 
 ```
 src/main/java/net/javaguides/springboot/
-├── controller/     REST endpoints for each module
+├── config/          SecurityConfig.java — Spring Security filter chain & in-memory users
+├── controller/      REST endpoints for each module
 ├── service/         Business logic interfaces
 ├── service/impl/    Business logic implementations
 ├── repository/      Spring Data JPA repositories
-├── model/            JPA entities
-└── exception/        Custom exception handling (404-style responses)
+├── model/           JPA entities (with JPA relationships)
+└── exception/       Custom exception handling (404-style responses)
 
 src/main/resources/
 ├── static/
 │   ├── index.html    Dashboard UI (tactical HUD theme)
-│   ├── style.css      Styling — glassmorphism, dark/light mode
-│   ├── app.js          Config-driven table/modal/CRUD logic
-│   └── images/         Background imagery
+│   ├── login.html    Custom login page (styled to match dashboard)
+│   ├── style.css     Glassmorphism / dark-light mode styling
+│   ├── app.js        Config-driven table / modal / CRUD logic
+│   └── images/       Background imagery
 └── application.properties
 ```
 
 ## Features (currently working)
 
+- **Authentication** — Spring Security form login with a custom `login.html` page; BCrypt password hashing; logout support
+- **Protected routes** — all pages except `login.html`, `style.css`, `app.js`, and `/images/**` require authentication
 - **Dashboard** — live stat cards + Chart.js bar chart pulling real data from all four battlefield APIs
 - **Employee management** — full CRUD (original template module)
-- **Weapon Configuration** — full CRUD (type, range, total, current stock)
-- **Player Configuration** — full CRUD (name, role, unit, login time)
-- **Exercise Configuration** — full CRUD (name, location, date, commander)
-- **System Configuration** — full CRUD (resource type, total, current allocation)
+- **Weapon Configuration** — full CRUD (type, range, total, current stock); linked to a Player via FK
+- **Player Configuration** — full CRUD (name, role, unit, login time); linked to an Exercise via FK; owns a list of Weapons
+- **Exercise Configuration** — full CRUD (name, location, date, commander); owns lists of Players and Systems
+- **System Configuration** — full CRUD (resource type, total, current allocation); linked to an Exercise via FK
 - Dark / Light "Ops Mode" toggle
-- Toast notifications for create/update/delete actions
+- Toast notifications for create / update / delete actions
 - Responsive layout (mobile breakpoint included)
+- Config-driven frontend table + modal system — adding a new entity to the UI requires only a small config block
 
-Each module's frontend is built on a **reusable, config-driven table + modal system** — adding a new entity to the UI requires only a small config block, not new UI code from scratch.
+## Authentication (default credentials)
+
+The application ships with a single in-memory user for development:
+
+| Username | Password | Role |
+|---|---|---|
+| `admin` | `battlefield123` | ADMIN |
+
+> **Change these before any deployment.** The credentials are set in `SecurityConfig.java` and encoded with BCrypt at startup.
 
 ## Not yet implemented
 
-- User login / authentication (no Spring Security yet)
-- Relationships between entities (e.g., Players assigned to Exercises — currently four independent tables)
-- Role-based access control
+- Role-based access control (RBAC) — multiple user roles with different permissions
+- API-level relationship endpoints (e.g., assign a Player to an Exercise through the UI)
 - Automated tests beyond the default generated test class
+- Database-backed user management (currently in-memory only)
 
 ## Database configuration
 
@@ -105,27 +144,30 @@ Set the `DB_PASSWORD` environment variable, then:
 
 **Windows:**
 ```
+set DB_PASSWORD=your_password
 mvnw.cmd spring-boot:run
 ```
 
-**Linux/macOS:**
-```
+**Linux / macOS:**
+```bash
+export DB_PASSWORD=your_password
 ./mvnw spring-boot:run
 ```
 
-The application runs at `http://localhost:8080`.
+The application runs at `http://localhost:8080`. You will be redirected to the login page automatically.
 
-Requires: JDK 17+, PostgreSQL 16+ (with a database named `ems` created beforehand), Maven not required locally (wrapper included).
+**Prerequisites:** JDK 17+, PostgreSQL 16+ with a database named `ems` created beforehand. Maven is not required locally (wrapper included).
 
 ## Roadmap
 
-- Add `@OneToMany` / `@ManyToOne` relationships between Player/Weapon/Exercise entities
-- Login/authentication page
-- Migrate the Employee module into the same config-driven frontend system used by the battlefield entities
-- Additional automated tests
+- Role-based access control (viewer vs. admin)
+- UI support for entity relationships (e.g., assign Players to Exercises, Weapons to Players)
+- Migrate the Employee module into the config-driven frontend system used by the battlefield entities
+- Database-backed user management (replace in-memory users)
+- Automated integration and unit tests
 
 ## Author
 
-**Palak Kulshreshtha**
-B.Tech Computer Science & Engineering, VIT Bhopal University
-DRDO Internship — Institute for Systems Studies and Analyses (ISSA)
+**Palak Kulshreshtha**  
+B.Tech Computer Science & Engineering, VIT Bhopal University  
+DRDO Internship — Institute for Systems Studies and Analyses (ISSA), Metcalfe House, Delhi
